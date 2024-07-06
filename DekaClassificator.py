@@ -59,29 +59,31 @@ def ToExcel():
 
     # SAVE ALL DATA IN EXCEL FILE
     data_es.to_excel('resultados_DEKA.xlsx', index=False)
+    
+    
+#TELEGRAM INFORMATION
+token = "XXXXXXXXXXXX:XXXXXXXXXXXXXXXXXXXXXXX"
+chat_id = "-XXXXXXXXXXXX"
 
-
-# TELEGRAM INFORMATION
-token = "XXXXXXXX:XXXXXXXXXXXXXXXXXX"
-chat_id = "-XXXXXXXXXXX"
-
-# CHROME INFORMATION
+#METAMASK & CHROME INFORMATION
 web = "https://es.deka.fit/race-results/?eventid=266769"
+path = 'C:\\Users\\XXXXXXXX\\chromedriver.exe'
 
 ############################
 ####    WEB SCRAPING    ####
 ############################
-
-# service = Service(executable_path=path)
-
-# NAVIGATION OPTIONS
+    
+#service = Service(executable_path=path)
+    
+# Opciones de navegación
 options = ChromeOptions()
 options.add_argument("--headless")  # BACKGROUND
+options.add_argument("--log-level=3") 
+
 driver = webdriver.Chrome(options=options) # NO PATH, IT'S INNECESSARY IN MY COMPUTER
 
 driver.get(web)
 
-# GIVE TIME TO LOAD THE PAGE CORRECTLY
 time.sleep(10)
 
 competition = input("Selecciona la competición (FIT/MILE/STRONG): ").strip().lower()
@@ -92,8 +94,8 @@ while competition not in ("fit", "mile", "strong"):
 
 # PATHS
 DEKA_STRONG_PATH = "/html/body/div[1]/div[3]/div[1]/div/main/div/article/section/div/div[2]/div[1]/div[2]/select/option[2]"
-DEKA_MILE_PATH = "/html/body/div[1]/div[3]/div[1]/div/main/div/article/section/div/div[2]/div[1]/div[2]/select/option[3]"
-DEKA_FIT_PATH = "/html/body/div[1]/div[3]/div[1]/div/main/div/article/section/div/div[2]/div[1]/div[2]/select/option[4]"
+DEKA_MILE_PATH = "/html/body/div[1]/div[3]/div[1]/div/main/div/article/section/div/div[2]/div[1]/div[2]/select/option[3]"   
+DEKA_FIT_PATH = "/html/body/div[1]/div[3]/div[1]/div/main/div/article/section/div/div[2]/div[1]/div[2]/select/option[4]"   
 
 if competition == "fit":
     select_competition = driver.find_element(By.XPATH, DEKA_FIT_PATH)
@@ -110,21 +112,42 @@ else:
 # SELECTING COMPETITION (FIT/MILE/STRONG)
 select_competition.click()
 
-time.sleep(1)
-
-# SHOWING ALL PARTICIPANTS (BUTTON)
-Show_all_participants = driver.find_element(By.XPATH, "/html/body/div[1]/div[3]/div[1]/div/main/div/article/section/div/div[4]/table/tbody[5]/tr/td/a[2]")
-Show_all_participants.click()
-
 time.sleep(2)
 
-# EXTRACT HTML ELEMENTO TO ANALYSE IT
-html_data = driver.find_element(By.XPATH, "/html/body/div[1]/div[3]/div[1]/div/main/div/article/section/div/div[4]/table/tbody[4]")
-html_data = html_data.get_attribute('outerHTML')
+if competition == "fit":
+
+    # If fit
+    Select_Overall = driver.find_element(By.XPATH, "/html/body/div[1]/div[3]/div[1]/div/main/div/article/section/div/div[2]/div[1]/div[3]/select/option[1]")
+    Select_Overall.click()
+
+    time.sleep(3)
+
+    # Showing all participants
+    Show_all_participants = driver.find_element(By.XPATH, "/html/body/div[1]/div[3]/div[1]/div/main/div/article/section/div/div[4]/table/tbody[3]/tr/td/a[2]")
+    Show_all_participants.click()   
+
+    time.sleep(3)
+
+    # Extrat element HTML to analyse
+    html_data = driver.find_element(By.XPATH, "/html/body/div[1]/div[3]/div[1]/div/main/div/article/section/div/div[4]/table/tbody[2]")
+    html_data = html_data.get_attribute('outerHTML')
+    
+else:
+
+    # Showing all participants
+    Show_all_participants = driver.find_element(By.XPATH, "/html/body/div[1]/div[3]/div[1]/div/main/div/article/section/div/div[4]/table/tbody[5]/tr/td/a[2]")
+    Show_all_participants.click()                          
+
+    time.sleep(3)
+
+    # Extrat element HTML to analyse
+    html_data = driver.find_element(By.XPATH, "/html/body/div[1]/div[3]/div[1]/div/main/div/article/section/div/div[4]/table/tbody[4]")
+    html_data = html_data.get_attribute('outerHTML')
 
 driver.close()
 
 # PRINT IN SCREEN
+
 # NAME
 my_name = input("Introduce el nombre registrado en DEKA: ")
 
@@ -140,10 +163,11 @@ if gender == "hombres":
 elif gender == "mujeres":
     my_gender = "F"
 else:
-    my_gender = "O"
+    my_gender = " "
+ 
 
 # EXCEL
-my_excel = input("¿Vas a querer también la información en un excel? (sí/no): \n").strip().lower()
+my_excel = input("¿Vas a querer también la información en un excel? (sí/no): ").strip().lower()
 
 while my_excel not in ("sí", "si", "no"):
     print("Por favor, escribe 'sí' o 'no'.")
@@ -154,7 +178,7 @@ os.system('cls')
 
 soup = BeautifulSoup(html_data, 'html.parser')
 
-rows = soup.find_all('tr', class_ ='Hover LastRecordLine')
+rows = soup.find_all('tr', class_='Hover LastRecordLine')
 
 count = 1
 
@@ -169,25 +193,27 @@ for row in rows:
         pais = img_tag['src'].split('/')[-1].split('.')[0].upper()
     else:
         pais = "N/A"  # Or any other default value you want to assign when there is no 'img' tag
-
-    nombre = row.find('td', style ='text-align: left;').find_next('td').find_next('td').text.strip()
-    categoria = row.find('td', style ='text-align: left;').find_next('td').find_next('td').find_next('td').find_next('td').text.strip()
-    tiempo = row.find_all('td', style ='text-align: left;')[-1].text.strip()
+    
+    nombre = row.find('td', style='text-align: left;').find_next('td').find_next('td').text.strip()
+    categoria = row.find('td', style='text-align: left;').find_next('td').find_next('td').find_next('td').find_next('td').text.strip()
+    tiempo = row.find_all('td', style='text-align: left;')[-1].text.strip()
 
     # CREATE THE OUT CHAIN FOR EACH FILE AND SHOW IT
     output = f"{pais} - {nombre} - {categoria}. Tiempo: {tiempo}"
-
+    
     if pais == "ES":
+
         if my_gender in categoria:
 
             if nombre == my_name: # SEARCH MY NAME AND SAVE IT TO SHOW IT LATER
+                
                 my_position = count
                 my_time = tiempo
                 print(f"{Fore.RED}{count}. {output}")
-
+                
             else:
                 print(f"{Fore.RESET}{count}. {output}")
-
+                
             count += 1
 
 if my_excel in ("sí", "si"):
@@ -195,12 +221,12 @@ if my_excel in ("sí", "si"):
 
 try:
     percent_position = (1 - (my_position / count)) * 100
-    print(f"\nPosición {my_position}/{count - 1} | Tiempo: {my_time}")
+    print(f"\nPosición {my_position}/{count - 1} | Tiempo: {my_time}")    
     print(f"\nPor delante del {percent_position:.2f}% de todos los participantes")
+    
+    requests.post("https://api.telegram.org/bot" +token+"/sendMessage",data={"chat_id": chat_id, "text": "\n"+comp})
+    requests.post("https://api.telegram.org/bot" +token+"/sendMessage",data={"chat_id": chat_id, "text": f"\n\nPosición {my_position}/{count - 1} | Tiempo: {my_time}"})
+    requests.post("https://api.telegram.org/bot" +token+"/sendMessage",data={"chat_id": chat_id, "text": f"\nPor delante del {percent_position:.2f}% de todos los participantes"})
 
-    requests.post("https://api.telegram.org/bot" + token +"/sendMessage", data={"chat_id": chat_id, "text": "\n" + comp})
-    requests.post("https://api.telegram.org/bot" + token +"/sendMessage", data={"chat_id": chat_id, "text": f"\n\nPosición {my_position}/{count - 1} | Tiempo: {my_time}"})
-    requests.post("https://api.telegram.org/bot" + token +"/sendMessage", data={"chat_id": chat_id, "text": f"\nPor delante del {percent_position:.2f}% de todos los participantes"})
-
-except:
+except Exception as e:
     print("\nNo se encontró tu nombre en la clasificación. Vuelve a revisar tu nombre e inténtalo de nuevo")
